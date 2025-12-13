@@ -1,0 +1,15 @@
+# Update frequency in seconds
+interval = 1
+
+[alias]
+# Left side = Ugly system name (copy exact from 'focusd week' output)
+# Right side = What you want to see
+"code" = "VS Code"
+"google-chrome" = "Chrome"
+"kitty" = "Terminal"
+"vesktop" = "Discord"
+"org.telegram.desktop" = "Telegram"
+"org.kde.dolphin" = "Dolphin"
+"steam" = "Steam"
+"com.github.th_ch.youtube_music" = "Youtube Music"
+"firefox" = "Firefox"
