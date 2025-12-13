@@ -19,8 +19,14 @@ the currently active window and recording usage locally.
 
 ---
 
-## 🛠 Requirements
 
+## 🚀 Installation
+```bash
+- Extract: tar -xzvf focusd_setup.tar.gz
+- Enter: cd focusd_installer
+- Run: ./install.sh
+```
+## 🛠 Requirements
 ### System dependencies
 - `libxcb`
 - `sqlite3`
@@ -33,8 +39,8 @@ sudo pacman -S libxcb sqlite
 ```bash
 sudo apt install libxcb1 libsqlite3-0
 ```
-## 🚀 Installation
-From source (recommended)
+
+From source 
 ```bash
 git clone https://github.com/revanthlol/focusd.git
 cd focusd
