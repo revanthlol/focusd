@@ -1,16 +1,16 @@
-# Focusd 🎯
-> A minimal, privacy-respecting screen time tracker for Linux (Hyprland & X11).
+# Focusd 
+> A minimal, lightweight screen time tracker for Linux (Hyprland & X11).
 > Built in Rust, with an Iced-based dashboard.
 
 ![Screenshot](screenshot_placeholder.png)
 
 ## Features
-- **Privacy First**: Data stored locally in SQLite (`~/.local/share/focusd/`).
-- **Compositor Native**: First-class support for **Hyprland** (JSON IPC) and X11.
-- **Visual Dashboard**: Modern, dark-themed GUI for Today/Week trends.
+- **Storage**: Data stored locally in SQLite (`~/.local/share/focusd/`).
+- **Compositor Native**: Support for **Hyprland** (JSON IPC) and X11.
+- **Visual Dashboard**: Modern, dark-themed GUI .
 
 ## Installation
-You can build from source using the provided installer:
+You can install from source using the provided installer:
 
 ```bash
 git clone https://github.com/revanthlol/focusd.git
@@ -18,7 +18,7 @@ cd focusd/focusd_installer/
 chmod +x install.sh
 ./install.sh
 ```
-
+**Check out Releases for better installation options.**
 ## Configuration
 Edit `~/.config/focusd/config.toml` to map ugly app IDs to human names:
 
