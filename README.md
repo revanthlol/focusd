@@ -30,8 +30,6 @@ Edit `~/.config/focusd/config.toml` to map ugly app IDs to human names:
 ```
 
 ## Usage
-
-```
 Binary will be installed to:
 ```bash
 ~/.cargo/bin/focusd
