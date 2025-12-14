@@ -1,45 +1,91 @@
 #!/bin/bash
 set -e
 
-APP_NAME="focusd"
-BIN_SOURCE="./bin/$APP_NAME"
-INSTALL_DIR="$HOME/.local/bin"
-CONFIG_DIR="$HOME/.config/$APP_NAME"
+# Configuration
+APP_CLI="focusd"
+APP_GUI_PKG="focusd_gui"     # Cargo package name
+APP_GUI_BIN="focusd-dashboard" # System binary name
+
+INSTALL_BIN="$HOME/.local/bin"
+INSTALL_SHARE="$HOME/.local/share"
+CONFIG_DIR="$HOME/.config/$APP_CLI"
 SERVICE_DIR="$HOME/.config/systemd/user"
+APPS_DIR="$HOME/.local/share/applications"
+ICONS_DIR="$HOME/.local/share/icons/hicolor/scalable/apps"
 
 # Colors
 GREEN='\033[0;32m'
-RED='\033[0;31m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
 NC='\033[0m'
 
-echo -e "${GREEN}=== Installing $APP_NAME (Binary Mode) ===${NC}"
+clear
+echo -e "${BLUE}=== Focusd Installer ===${NC}"
+echo "Select installation mode:"
+echo "1) CLI Only (Daemon + Terminal Tool)"
+echo "2) Full Desktop Experience (CLI + GUI Dashboard + Icons)"
+read -p "Enter choice [1/2]: " CHOICE
 
-# 1. Check if the binary exists in the package
-if [ ! -f "$BIN_SOURCE" ]; then
-    echo -e "${RED}Error: Binary not found in ./bin/${NC}"
-    echo "Make sure you extracted the full zip archive."
+if [[ "$CHOICE" != "1" && "$CHOICE" != "2" ]]; then
+    echo "Invalid choice. Exiting."
     exit 1
 fi
 
-# 2. Basic Dependency Check
-# We built with bundled SQLite, so we mainly check for X11 libs if X11 fallback is used.
-if ! ldconfig -p | grep -q libxcb; then
-    echo -e "${RED}Warning: libxcb not found.${NC} X11 backend might fail."
-    echo "If you are on pure Hyprland, this is fine."
+echo ""
+echo -e "${GREEN}[1/5] Compiling source...${NC}"
+
+# --- Step 1: Build & Stop Service ---
+# Always build CLI
+cargo build --release -p focusd_cli
+
+if [ "$CHOICE" == "2" ]; then
+    cargo build --release -p focusd_gui
 fi
 
-# 3. Install Binary
-echo "[-] Installing binary to $INSTALL_DIR..."
-mkdir -p "$INSTALL_DIR"
+echo -e "${GREEN}[2/5] Stopping existing background service...${NC}"
+systemctl --user stop $APP_CLI.service 2>/dev/null || true
 
-# Stop service if running to release file lock
-systemctl --user stop $APP_NAME.service 2>/dev/null || true
 
-cp "$BIN_SOURCE" "$INSTALL_DIR/"
-chmod +x "$INSTALL_DIR/$APP_NAME"
+# --- Step 2: Install CLI (Common) ---
+echo -e "${GREEN}[3/5] Installing Core binaries...${NC}"
+mkdir -p "$INSTALL_BIN"
+cp "target/release/$APP_CLI" "$INSTALL_BIN/$APP_CLI"
+chmod +x "$INSTALL_BIN/$APP_CLI"
 
-# 4. Create Config
-echo "[-] Checking configuration..."
+
+# --- Step 3: Install GUI (Conditional) ---
+if [ "$CHOICE" == "2" ]; then
+    echo -e "${GREEN}[3.5/5] Installing Dashboard & Assets...${NC}"
+    
+    # 1. Install GUI Binary
+    cp "target/release/focusd_gui" "$INSTALL_BIN/$APP_GUI_BIN"
+    chmod +x "$INSTALL_BIN/$APP_GUI_BIN"
+
+    # 2. Install Assets
+    if [ -d "assets" ]; then
+        mkdir -p "$ICONS_DIR"
+        mkdir -p "$APPS_DIR"
+        
+        # Icon
+        cp "assets/focusd.svg" "$ICONS_DIR/focusd.svg" 2>/dev/null || echo -e "${YELLOW}Warning: Icon not found${NC}"
+        
+        # Desktop Entry
+        cp "assets/focusd.desktop" "$APPS_DIR/focusd.desktop" 2>/dev/null || echo -e "${YELLOW}Warning: .desktop file not found${NC}"
+        
+        # Notify OS
+        update-desktop-database "$APPS_DIR" 2>/dev/null || true
+    else
+        echo -e "${YELLOW}Warning: './assets' directory missing. Run setup_assets.sh first!${NC}"
+    fi
+else
+    # Cleanup if downgrading to CLI only
+    rm -f "$INSTALL_BIN/$APP_GUI_BIN" 2>/dev/null
+    rm -f "$APPS_DIR/focusd.desktop" 2>/dev/null
+fi
+
+
+# --- Step 4: Configuration & Service (Common) ---
+echo -e "${GREEN}[4/5] Checking configuration...${NC}"
 mkdir -p "$CONFIG_DIR"
 if [ ! -f "$CONFIG_DIR/config.toml" ]; then
     cat <<EOF > "$CONFIG_DIR/config.toml"
@@ -48,25 +94,18 @@ interval = 1
 "code" = "VS Code"
 "google-chrome" = "Chrome"
 "kitty" = "Terminal"
-"vesktop" = "Discord"
-"firefox" = "Firefox"
-"spotify" = "Spotify"
 EOF
-    echo -e "${GREEN}    Created default config at $CONFIG_DIR/config.toml${NC}"
-else
-    echo "    Config exists, skipping."
 fi
 
-# 5. Setup Service
-echo "[-] configuring background service..."
+echo -e "${GREEN}[5/5] Configuring Daemon Service...${NC}"
 mkdir -p "$SERVICE_DIR"
-cat <<EOF > "$SERVICE_DIR/$APP_NAME.service"
+cat <<EOF > "$SERVICE_DIR/$APP_CLI.service"
 [Unit]
-Description=Focusd Screen Time Tracker
+Description=Focusd Screen Tracker
 After=graphical-session.target
 
 [Service]
-ExecStart=$INSTALL_DIR/$APP_NAME daemon
+ExecStart=$INSTALL_BIN/$APP_CLI daemon
 Restart=always
 RestartSec=5
 
@@ -74,16 +113,14 @@ RestartSec=5
 WantedBy=default.target
 EOF
 
-# 6. Start
+# --- Step 5: Start ---
 systemctl --user daemon-reload
-systemctl --user enable $APP_NAME.service
-systemctl --user restart $APP_NAME.service
+systemctl --user enable $APP_CLI.service
+systemctl --user restart $APP_CLI.service
 
-echo -e "${GREEN}=== Success! ===${NC}"
-echo "Run '$APP_NAME today' to see stats."
-
-# PATH check
-if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
-    echo -e "${RED}Note: $HOME/.local/bin is not in your PATH.${NC}"
-    echo "You might need to restart your terminal or add it to .bashrc/.zshrc"
+echo ""
+echo -e "${BLUE}=== Installation Complete! ===${NC}"
+if [ "$CHOICE" == "2" ]; then
+    echo "You can launch 'Focusd Dashboard' from your app menu."
 fi
+echo "The tracking daemon is running in the background."

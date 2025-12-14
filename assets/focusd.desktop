@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Focusd Dashboard
+Comment=Privacy Respecting Screen Time Tracker
+Exec=focusd-dashboard
+Icon=focusd
+Terminal=false
+Type=Application
+Categories=Utility;
+Keywords=Time;Tracker;Rust;
+StartupWMClass=focusd

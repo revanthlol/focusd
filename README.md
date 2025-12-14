@@ -1,50 +1,36 @@
-# focusd
+# Focusd 🎯
+> A minimal, privacy-respecting screen time tracker for Linux (Hyprland & X11).
+> Built in Rust, with an Iced-based dashboard.
 
-`focusd` is a lightweight, daemon-style CLI tool for Linux that tracks
-**focused window time** to help you understand where your attention goes.
+![Screenshot](screenshot_placeholder.png)
 
-It works across different desktop environments by observing
-the currently active window and recording usage locally.
+## Features
+- **Privacy First**: Data stored locally in SQLite (`~/.local/share/focusd/`).
+- **Compositor Native**: First-class support for **Hyprland** (JSON IPC) and X11.
+- **Visual Dashboard**: Modern, dark-themed GUI for Today/Week trends.
 
----
+## Installation
+You can build from source using the provided installer:
 
-## ✨ Features
-
-- ⏱ Tracks time spent on the currently focused window
-- 🖥 Works across DEs (X11 / Wayland where supported)
-- 🧠 No cloud, no telemetry — data stays local
-- 📊 Stores data in a local SQLite database
-- ⚡ Minimal resource usage
-- 🧩 Designed as a daemon + CLI interface
-
----
-
-
-## 🚀 Installation
-```bash
-- Extract: tar -xzvf focusd_setup.tar.gz
-- Enter: cd focusd_installer
-- Run: ./install.sh
-```
-## 🛠 Requirements
-### System dependencies
-- `libxcb`
-- `sqlite3`
-
-#### Arch Linux
-```bash
-sudo pacman -S libxcb sqlite
-```
-#### Ubuntu / Debian
-```bash
-sudo apt install libxcb1 libsqlite3-0
-```
-
-From source 
 ```bash
 git clone https://github.com/revanthlol/focusd.git
-cd focusd
-cargo install --path .
+cd focusd/focusd_installer/
+chmod +x install.sh
+./install.sh
+```
+
+## Configuration
+Edit `~/.config/focusd/config.toml` to map ugly app IDs to human names:
+
+```toml
+[alias]
+"code" = "VS Code"
+"firefox" = "Browser"
+"com.mitchellh.ghostty" = "Ghostty"
+```
+
+## Usage
+
 ```
 Binary will be installed to:
 ```bash
@@ -69,13 +55,5 @@ Options:
   -h, --help     Print help
   -V, --version  Print version
 ```
-## ⚙ Configuration
-Config file location:
-```bash
-~/.config/focusd/config.toml
-```
-## 🧪 Development
-```bash
-cargo run
-cargo test
-```
+- **GUI**: Run `focusd-dashboard` (or find **Focusd** in your app menu).
+---
