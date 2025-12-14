@@ -5,4 +5,5 @@ edition = "2021"
 
 [dependencies]
 focusd_core = { path = "../core" }
-iced = { version = "0.13", features = ["canvas"] }
+iced = { version = "0.13", features = ["canvas"] } # <--- All we need
+chrono = "0.4"

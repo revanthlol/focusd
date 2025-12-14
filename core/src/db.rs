@@ -1,6 +1,9 @@
 use rusqlite::{params, Connection, Result};
-use chrono::{Duration, Local}; 
+use chrono::{Local, NaiveDate}; 
 use std::fs;
+use std::collections::HashMap; // New import
+
+// ... [Existing imports and structs remain the same] ...
 
 pub struct Db {
     conn: Connection,
@@ -14,6 +17,11 @@ pub struct ExportEntry {
 }
 
 impl Db {
+    // ... [init, create_tables, log_usage, export_json REMAIN THE SAME] ...
+    
+    // KEEP: Old init(), create_tables(), log_usage(), export_json() exactly as they are.
+    // ADD: The new functions below.
+    
     pub fn init() -> anyhow::Result<Self> {
         let mut db_path = dirs::data_local_dir().expect("Could not find data dir");
         db_path.push("focusd");
@@ -24,7 +32,7 @@ impl Db {
 
         let conn = Connection::open(db_path)?;
         conn.execute_batch("PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;")?;
-
+        
         let db = Db { conn };
         db.create_tables()?;
         Ok(db)
@@ -76,31 +84,6 @@ impl Db {
         Ok(())
     }
 
-    // === NEW: Generic Query for Today or Date Range ===
-    pub fn get_usage_since(&self, days_ago: i64) -> anyhow::Result<Vec<(String, i64)>> {
-        let cutoff_date = (Local::now() - Duration::days(days_ago)).date_naive().to_string();
-        
-        let mut stmt = self.conn.prepare(
-            "SELECT a.display_name, SUM(u.seconds_focused) as total
-             FROM usage_daily u
-             JOIN apps a ON u.app_ref_id = a.id
-             WHERE u.date >= ?1
-             GROUP BY a.display_name
-             ORDER BY total DESC"
-        )?;
-
-        let rows = stmt.query_map(params![cutoff_date], |row| {
-            Ok((row.get(0)?, row.get(1)?))
-        })?;
-
-        let mut result = Vec::new();
-        for r in rows {
-            result.push(r?);
-        }
-        Ok(result)
-    }
-
-    // === NEW: Export Data ===
     pub fn export_json(&self) -> anyhow::Result<Vec<ExportEntry>> {
         let mut stmt = self.conn.prepare(
             "SELECT u.date, a.display_name, u.seconds_focused
@@ -122,5 +105,58 @@ impl Db {
             result.push(r?);
         }
         Ok(result)
+    }
+
+    // === NEW QUERY LOGIC ===
+
+    /// 1. Get total screen time PER DAY for a range (for Charts)
+    /// Returns: Map<"2023-12-14", 12304>
+    pub fn get_daily_totals(&self, start: NaiveDate, end: NaiveDate) -> anyhow::Result<HashMap<String, i64>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT u.date, SUM(u.seconds_focused) 
+             FROM usage_daily u
+             WHERE u.date BETWEEN ?1 AND ?2
+             GROUP BY u.date"
+        )?;
+
+        let rows = stmt.query_map(params![start.to_string(), end.to_string()], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
+        })?;
+
+        let mut map = HashMap::new();
+        for r in rows {
+            let (date_str, seconds) = r?;
+            map.insert(date_str, seconds);
+        }
+        Ok(map)
+    }
+
+    /// 2. Get total time PER APP for a range (for List)
+    pub fn get_app_usage_range(&self, start: NaiveDate, end: NaiveDate) -> anyhow::Result<Vec<(String, i64)>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT a.display_name, SUM(u.seconds_focused) as total
+             FROM usage_daily u
+             JOIN apps a ON u.app_ref_id = a.id
+             WHERE u.date BETWEEN ?1 AND ?2
+             GROUP BY a.display_name
+             ORDER BY total DESC"
+        )?;
+
+        let rows = stmt.query_map(params![start.to_string(), end.to_string()], |row| {
+            Ok((row.get(0)?, row.get(1)?))
+        })?;
+
+        let mut result = Vec::new();
+        for r in rows {
+            result.push(r?);
+        }
+        Ok(result)
+    }
+    
+    // Legacy support for CLI (wraps the new logic)
+    pub fn get_usage_since(&self, days_ago: i64) -> anyhow::Result<Vec<(String, i64)>> {
+        let end = Local::now().date_naive();
+        let start = end - chrono::Duration::days(days_ago);
+        self.get_app_usage_range(start, end)
     }
 }
