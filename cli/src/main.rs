@@ -1,8 +1,10 @@
-mod db;
+// Internal Modules (Local to CLI)
 mod x11;
 mod hyprland;
-mod config;
 mod idle;
+
+// External Modules (From Core)
+use focusd_core::{db, config}; // <--- CHANGED THIS
 
 use clap::{Parser, Subcommand};
 use colored::*;

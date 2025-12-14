@@ -1,0 +1,17 @@
+[package]
+name = "focusd_cli"
+version = "1.0.0"
+edition = "2021"
+
+[[bin]]
+name = "focusd"
+path = "src/main.rs"
+
+[dependencies]
+focusd_core = { path = "../core" } # Links to the local library
+clap = { version = "4.4", features = ["derive"] }
+colored = "2.0"
+x11rb = "0.13"
+serde_json = "1.0"
+serde = "1.0"
+anyhow = "1.0"

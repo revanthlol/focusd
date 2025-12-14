@@ -1,0 +1,8 @@
+[package]
+name = "focusd_gui"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+focusd_core = { path = "../core" }
+iced = { version = "0.13", features = ["canvas"] }
