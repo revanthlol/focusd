@@ -2,8 +2,6 @@
 > A minimal, lightweight screen time tracker for Linux (Hyprland & X11).
 > Built in Rust, with an Iced-based dashboard.
 
-![Screenshot](screenshot_placeholder.png)
-
 ## Features
 - **Storage**: Data stored locally in SQLite (`~/.local/share/focusd/`).
 - **Compositor Native**: Support for **Hyprland** (JSON IPC) and X11.
@@ -52,5 +50,5 @@ Options:
   -h, --help     Print help
   -V, --version  Print version
 ```
-- **GUI**: Run `focusd-dashboard` (or find **Focusd** in your app menu).
+- **GUI(optional)**: Run `focusd-dashboard` (or find **Focusd** in your app menu).
 ---
