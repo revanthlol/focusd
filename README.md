@@ -29,14 +29,13 @@ Edit `~/.config/focusd/config.toml` to map ugly app IDs to human names:
 "com.mitchellh.ghostty" = "Ghostty"
 ```
 
-## Usage
 Binary will be installed to:
 ```bash
 ~/.cargo/bin/focusd
 ```
 Make sure it’s in your PATH.
 
-## ▶ Usage
+## Usage
 ```bash
 focusd [command]
 ```
