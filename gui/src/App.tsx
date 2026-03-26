@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Activity, Clock, Zap } from "lucide-react";
-import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Data { 
@@ -41,6 +41,32 @@ export default function App() {
   const [view, setView] = useState("today");
   const [data, setData] = useState<Data|null>(null);
 
+  useEffect(() => {
+    invoke<Record<string, string>>("get_theme")
+      .then((theme) => {
+        const root = document.documentElement;
+        Object.entries(theme).forEach(([key, value]) => {
+          root.style.setProperty(key, value);
+        });
+      })
+      .catch(console.error);
+  }, []); // empty deps = runs once on mount
+
+  useEffect(() => {
+    const handleFocus = () => {
+      invoke<Record<string, string>>("get_theme")
+        .then((theme) => {
+          const root = document.documentElement;
+          Object.entries(theme).forEach(([key, value]) => {
+            root.style.setProperty(key, value);
+          });
+        })
+        .catch(console.error);
+    };
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, []);
+
   // Polling Logic
   useEffect(() => {
     const fetch = () => invoke<Data>("get_data", { view }).then(setData).catch(console.error);
@@ -59,7 +85,7 @@ export default function App() {
       <header className="flex justify-between items-end mb-6 pb-2">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Zap className="h-6 w-6 text-white fill-white" /> FOCUSD
+            <Zap className="h-6 w-6 text-primary fill-primary" /> FOCUSD
           </h1>
           <p className="text-muted-foreground text-xs uppercase tracking-widest mt-1">Analytics</p>
         </div>
@@ -67,8 +93,8 @@ export default function App() {
         {/* Status Indicator */}
         <div className="flex items-center gap-2 mb-1 bg-secondary/50 px-3 py-1 rounded-full border border-border/50">
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
           </span>
           <span className="text-[10px] text-muted-foreground font-medium uppercase">Live</span>
         </div>
@@ -120,7 +146,7 @@ export default function App() {
                         <BarChart data={data?.chart.map(([name, v]) => ({ name, value: v })) || []}>
                           <XAxis 
                             dataKey="name" 
-                            stroke="#888888" 
+                            stroke="hsl(var(--muted-foreground))" 
                             fontSize={12} 
                             tickLine={false} 
                             axisLine={false} 

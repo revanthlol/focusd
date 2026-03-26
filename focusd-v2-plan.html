@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Focusd v2 — Upgrade Plan</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3a;
+    --text: #e4e4ef;
+    --muted: #6b6b80;
+    --accent: #5eead4;
+    --accent-dim: #2dd4bf20;
+    --accent-glow: #5eead430;
+    --danger: #f87171;
+    --warn: #fbbf24;
+    --success: #34d399;
+    --blue: #60a5fa;
+    --purple: #a78bfa;
+    --pink: #f472b6;
+    --orange: #fb923c;
+    --radius: 12px;
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 2rem;
+  }
+
+  @media (max-width: 768px) { body { padding: 1rem; } }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  /* ── Header ── */
+  .hero {
+    text-align: center;
+    padding: 3rem 2rem;
+    margin-bottom: 2rem;
+    background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 50% 50%, var(--accent-glow) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .hero h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.5rem;
+    position: relative;
+  }
+  .hero h1 span { color: var(--accent); }
+  .hero p {
+    color: var(--muted);
+    font-size: 0.95rem;
+    position: relative;
+  }
+
+  /* ── Global Progress ── */
+  .global-progress {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  .global-progress-info {
+    flex-shrink: 0;
+    text-align: center;
+    min-width: 80px;
+  }
+  .global-progress-number {
+    font-size: 2rem;
+    font-weight: 800;
+    font-family: var(--mono);
+    color: var(--accent);
+  }
+  .global-progress-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .global-bar-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .global-bar-bg {
+    height: 10px;
+    background: var(--surface2);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .global-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #a78bfa);
+    border-radius: 99px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 0;
+  }
+  .global-stats {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .global-stats strong { color: var(--text); }
+
+  /* ── Phase ── */
+  .phase {
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+  .phase.phase-complete { border-color: var(--success); }
+
+  .phase-header {
+    padding: 1.25rem 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    user-select: none;
+    transition: background 0.2s;
+    position: relative;
+  }
+  .phase-header:hover { background: var(--surface2); }
+
+  .phase-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .phase-title-wrap { flex: 1; }
+  .phase-number {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+  .phase-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .phase-progress-mini {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+  }
+  .phase-pct {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    font-weight: 600;
+    min-width: 42px;
+    text-align: right;
+  }
+  .phase-bar-mini {
+    width: 80px;
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .phase-bar-mini-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+
+  .phase-chevron {
+    color: var(--muted);
+    transition: transform 0.3s;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+  .phase.open .phase-chevron { transform: rotate(90deg); }
+
+  .phase-body {
+    display: none;
+    padding: 0 1.5rem 1.5rem;
+  }
+  .phase.open .phase-body { display: block; }
+
+  /* ── Section ── */
+  .section {
+    margin-top: 1.25rem;
+  }
+  .section-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── Task ── */
+  .task {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+  .task:hover { background: var(--surface2); }
+
+  .task input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-top: 1px;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .task input[type="checkbox"]:checked {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .task input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--bg);
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .task-content { flex: 1; }
+  .task-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .task.done .task-label {
+    text-decoration: line-through;
+    color: var(--muted);
+  }
+  .task-desc {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 2px;
+    line-height: 1.5;
+  }
+  .task.done .task-desc { opacity: 0.5; }
+
+  .task-tags {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 4px;
+    flex-wrap: wrap;
+  }
+  .tag {
+    font-size: 0.6rem;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .tag-core { background: #5eead420; color: #5eead4; }
+  .tag-cli { background: #60a5fa20; color: #60a5fa; }
+  .tag-gui { background: #f472b620; color: #f472b6; }
+  .tag-db { background: #fbbf2420; color: #fbbf24; }
+  .tag-theme { background: #a78bfa20; color: #a78bfa; }
+  .tag-config { background: #fb923c20; color: #fb923c; }
+  .tag-dx { background: #34d39920; color: #34d399; }
+  .tag-perf { background: #f8717120; color: #f87171; }
+  .tag-bug { background: #f8717140; color: #f87171; }
+  .tag-new { background: #5eead415; color: #5eead4; border: 1px solid #5eead430; }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    padding: 2rem;
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
+  .footer a { color: var(--accent); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+
+  /* ── Notes block ── */
+  .note {
+    margin-top: 1rem;
+    padding: 0.85rem 1rem;
+    background: var(--accent-dim);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    font-size: 0.8rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .note code {
+    background: #00000040;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+  }
+  .note strong { color: var(--accent); }
+
+  /* ── Reset button ── */
+  .reset-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 0.4rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-family: var(--font);
+    transition: all 0.2s;
+  }
+  .reset-btn:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ═══════ HERO ═══════ -->
+<div class="hero">
+  <h1>Focusd <span>v2</span></h1>
+  <p>Complete upgrade plan — backend, CLI, theming, GUI</p>
+</div>
+
+<!-- ═══════ GLOBAL PROGRESS ═══════ -->
+<div class="global-progress">
+  <div class="global-progress-info">
+    <div class="global-progress-number" id="globalPct">0%</div>
+    <div class="global-progress-label">Complete</div>
+  </div>
+  <div class="global-bar-wrap">
+    <div class="global-bar-bg">
+      <div class="global-bar-fill" id="globalBar" style="width:0%"></div>
+    </div>
+    <div class="global-stats">
+      <span><strong id="globalDone">0</strong> / <span id="globalTotal">0</span> tasks</span>
+      <span>|</span>
+      <span><strong id="globalPhasesDone">0</strong> / <span id="globalPhasesTotal">5</span> phases done</span>
+      <span style="margin-left:auto">
+        <button class="reset-btn" onclick="resetAll()">Reset All</button>
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!--                    PHASE 1: BACKEND                       -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="phase open" data-phase="1">
+  <div class="phase-header" onclick="togglePhase(this)">
+    <div class="phase-icon" style="background:#fbbf2420;color:#fbbf24;">🗄️</div>
+    <div class="phase-title-wrap">
+      <div class="phase-number">Phase 1</div>
+      <div class="phase-title">Stabilize Backend & Data Model</div>
+    </div>
+    <div class="phase-progress-mini">
+      <span class="phase-pct" data-pct>0%</span>
+      <div class="phase-bar-mini">
+        <div class="phase-bar-mini-fill" style="width:0%;background:#fbbf24;" data-bar></div>
+      </div>
+    </div>
+    <div class="phase-chevron">▶</div>
+  </div>
+  <div class="phase-body">
+
+    <div class="note">
+      <strong>Why first?</strong> Every feature in CLI and GUI depends on the data layer.
+      Get this right and everything else flows naturally. Don't touch UI until this phase is solid.
+    </div>
+
+    <!-- Schema & Migrations -->
+    <div class="section">
+      <div class="section-title">Schema & Migrations</div>
+
+      <label class="task" data-id="1-1">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add <code>PRAGMA user_version</code> migration system</div>
+          <div class="task-desc">Simple version check in <code>db.rs</code>. On init, read version, run pending migrations sequentially. No heavy framework needed.</div>
+          <div class="task-tags"><span class="tag tag-db">db</span><span class="tag tag-core">core</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="1-2">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Create <code>usage_hourly</code> table</div>
+          <div class="task-desc">Schema: <code>(app_ref_id, date, hour, seconds_focused)</code> with <code>UNIQUE(app_ref_id, date, hour)</code>. This unlocks hourly charts, timeline view, and "most productive hours".</div>
+          <div class="task-tags"><span class="tag tag-db">db</span><span class="tag tag-new">new feature</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="1-3">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Update <code>log_usage()</code> to write both daily + hourly</div>
+          <div class="task-desc">On each tick, upsert into <code>usage_daily</code> AND <code>usage_hourly</code> (using current hour). Wrap in a transaction.</div>
+          <div class="task-tags"><span class="tag tag-db">db</span><span class="tag tag-core">core</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="1-4">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Write migration #1: add hourly table to existing DBs</div>
+          <div class="task-desc">Users with existing data need the table created on upgrade. Migration sets <code>user_version = 1</code> after success.</div>
+          <div class="task-tags"><span class="tag tag-db">db</span></div>
+        </div>
+      </label>
+    </div>
+
+    <!-- New Query Methods -->
+    <div class="section">
+      <div class="section-title">New Query Methods</div>
+
+      <label class="task" data-id="1-5">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add <code>get_day_total(date) → i64</code></div>
+          <div class="task-desc">Total seconds for a single day. Used for comparison cards ("vs yesterday").</div>
+          <div class="task-tags"><span class="tag tag-db">db</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="1-6">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add <code>get_hourly_totals(date) → Vec&lt;(u8, i64)&gt;</code></div>
+          <div class="task-desc">Returns 0–23 hour buckets with total seconds per hour. Powers the hourly/timeline chart.</div>
+          <div class="task-tags"><span class="tag tag-db">db</span><span class="tag tag-new">new feature</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="1-7">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add <code>get_hourly_app_breakdown(date) → Vec&lt;(u8, String, i64)&gt;</code></div>
+          <div class="task-desc">Per-hour per-app breakdown. Enables stacked hourly charts and timeline visualization.</div>
+          <div class="task-tags"><span class="tag tag-db">db</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="1-8">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add <code>get_monthly_heatmap(year, month) → Vec&lt;(NaiveDate, i64)&gt;</code></div>
+          <div class="task-desc">Returns total seconds per day for an entire month. Powers the calendar heatmap widget.</div>
+          <div class="task-tags"><span class="tag tag-db">db</span><span class="tag tag-new">new feature</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="1-9">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add <code>get_streak_info() → (current_streak, longest_streak)</code></div>
+          <div class="task-desc">Count consecutive days with any tracked usage. Nice for gamification and stats.</div>
+          <div class="task-tags"><span class="tag tag-db">db</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="1-10">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add <code>get_global_stats() → GlobalStats</code></div>
+          <div class="task-desc">Struct with: total_days_tracked, total_seconds_all_time, total_distinct_apps, first_tracked_date. For <code>focusd stats</code> and settings panel.</div>
+          <div class="task-tags"><span class="tag tag-db">db</span></div>
+        </div>
+      </label>
+    </div>
+
+    <!-- Bug Fixes -->
+    <div class="section">
+      <div class="section-title">Bug Fixes & Data Integrity</div>
+
+      <label class="task" data-id="1-11">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Fix alias merging — aggregate after alias mapping</div>
+          <div class="task-desc">Currently if <code>code</code> and <code>Code</code> both map to "VS Code", they appear as separate rows. Post-alias, merge by summing seconds for duplicate display names.</div>
+          <div class="task-tags"><span class="tag tag-bug">bug</span><span class="tag tag-core">core</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="1-12">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Normalize <code>app_id</code> before storing</div>
+          <div class="task-desc">Trim whitespace, handle empty strings at DB level. Prevents ghost entries like blank app names.</div>
+          <div class="task-tags"><span class="tag tag-bug">bug</span><span class="tag tag-db">db</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="1-13">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Remove or implement <code>idle_timeout</code> config</div>
+          <div class="task-desc">Currently declared in Config but never used. Either wire it into idle detection logic or remove the field to avoid confusion.</div>
+          <div class="task-tags"><span class="tag tag-bug">bug</span><span class="tag tag-config">config</span></div>
+        </div>
+      </label>
+    </div>
+
+    <!-- Config Evolution -->
+    <div class="section">
+      <div class="section-title">Config Evolution</div>
+
+      <label class="task" data-id="1-14">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Design new config schema with <code>[apps.X]</code> sections</div>
+          <div class="task-desc">Move from flat <code>[alias]</code> to structured per-app config: <code>[apps.code] name = "VS Code", category = "Development"</code>. Keep backward compat with old <code>[alias]</code>.</div>
+          <div class="task-tags"><span class="tag tag-config">config</span><span class="tag tag-core">core</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="1-15">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add category support in config</div>
+          <div class="task-desc">Categories like "Browser", "Terminal", "Development", "Games", "Social". Used for grouping in charts and color coding.</div>
+          <div class="task-tags"><span class="tag tag-config">config</span><span class="tag tag-new">new feature</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="1-16">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add <code>theme</code> field to config</div>
+          <div class="task-desc"><code>theme = "auto"</code> | <code>"dark"</code> | <code>"matugen"</code> | <code>"custom"</code>. Read in both CLI and GUI.</div>
+          <div class="task-tags"><span class="tag tag-config">config</span><span class="tag tag-theme">theme</span></div>
+        </div>
+      </label>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!--                    PHASE 2: CLI                           -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="phase" data-phase="2">
+  <div class="phase-header" onclick="togglePhase(this)">
+    <div class="phase-icon" style="background:#60a5fa20;color:#60a5fa;">⌨️</div>
+    <div class="phase-title-wrap">
+      <div class="phase-number">Phase 2</div>
+      <div class="phase-title">Upgrade CLI into a Power-User Tool</div>
+    </div>
+    <div class="phase-progress-mini">
+      <span class="phase-pct" data-pct>0%</span>
+      <div class="phase-bar-mini">
+        <div class="phase-bar-mini-fill" style="width:0%;background:#60a5fa;" data-bar></div>
+      </div>
+    </div>
+    <div class="phase-chevron">▶</div>
+  </div>
+  <div class="phase-body">
+
+    <div class="note">
+      <strong>Goal:</strong> Make <code>focusd</code> feel like a premium terminal tool.
+      Think <code>btop</code>, <code>lazygit</code>, <code>starship</code> quality.
+      Beautiful output, useful commands, zero bloat.
+    </div>
+
+    <!-- New Commands -->
+    <div class="section">
+      <div class="section-title">New Commands</div>
+
+      <label class="task" data-id="2-1">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add <code>focusd month</code> command</div>
+          <div class="task-desc">Show current month's usage. Same style as today/week but for ~30 days. Very natural for users.</div>
+          <div class="task-tags"><span class="tag tag-cli">cli</span><span class="tag tag-new">new feature</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="2-2">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add <code>focusd range --from YYYY-MM-DD --to YYYY-MM-DD</code></div>
+          <div class="task-desc">Custom date range query. Reuse <code>get_app_usage_range()</code>. Validate dates, nice error messages.</div>
+          <div class="task-tags"><span class="tag tag-cli">cli</span><span class="tag tag-new">new feature</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="2-3">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add <code>focusd top --days N --limit N</code></div>
+          <div class="task-desc">Show top N apps over last N days. Defaults: 7 days, 10 apps. Quick power-user insight.</div>
+          <div class="task-tags"><span class="tag tag-cli">cli</span><span class="tag tag-new">new feature</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="2-4">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add <code>focusd stats</code> — global statistics</div>
+          <div class="task-desc">Show: total days tracked, total hours all time, distinct apps, first tracked day, longest streak, current streak. Uses <code>get_global_stats()</code>.</div>
+          <div class="task-tags"><span class="tag tag-cli">cli</span><span class="tag tag-new">new feature</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="2-5">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add <code>focusd doctor</code> — system diagnostics</div>
+          <div class="task-desc">Check and report: DB path & size, config path & parse status, detected environment (Hyprland/X11/Wayland), <code>hyprctl</code> availability, <code>loginctl</code> availability, session type, daemon status hint.</div>
+          <div class="task-tags"><span class="tag tag-cli">cli</span><span class="tag tag-dx">dx</span><span class="tag tag-new">new feature</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="2-6">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add <code>focusd config path</code> / <code>focusd config edit</code></div>
+          <div class="task-desc"><code>path</code> prints config file location. <code>edit</code> opens it in <code>$EDITOR</code>. Maybe <code>focusd config init</code> to create default.</div>
+          <div class="task-tags"><span class="tag tag-cli">cli</span><span class="tag tag-config">config</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="2-7">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add <code>focusd watch</code> — live terminal dashboard</div>
+          <div class="task-desc">Refreshing TUI view showing: current active app, today's total, top 5 apps, idle status. Use <code>crossterm</code> for clearing/redraw. Refresh every 1–2 seconds.</div>
+          <div class="task-tags"><span class="tag tag-cli">cli</span><span class="tag tag-new">new feature</span></div>
+        </div>
+      </label>
+    </div>
+
+    <!-- Output Improvements -->
+    <div class="section">
+      <div class="section-title">Output & Formatting</div>
+
+      <label class="task" data-id="2-8">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Replace basic <code>println!</code> reports with proper table formatting</div>
+          <div class="task-desc">Use <code>comfy-table</code> or <code>tabled</code> crate. Columns: App, Time, Percentage, Bar. Proper alignment and padding.</div>
+          <div class="task-tags"><span class="tag tag-cli">cli</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="2-9">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add percentage column to reports</div>
+          <div class="task-desc">Show each app as % of total. e.g. <code>Firefox  1h 49m  42%  ████████░░░░</code></div>
+          <div class="task-tags"><span class="tag tag-cli">cli</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="2-10">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add "compared to yesterday" / "compared to last week" line</div>
+          <div class="task-desc">After total time, show delta: <code>↑ 1h 54m vs yesterday</code> or <code>↓ 23m vs yesterday</code>. Uses <code>get_day_total()</code>.</div>
+          <div class="task-tags"><span class="tag tag-cli">cli</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="2-11">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add <code>--json</code> flag to all report commands</div>
+          <div class="task-desc"><code>focusd today --json</code>, <code>focusd week --json</code>, etc. Output structured JSON for scripting/piping. Skip colors when <code>--json</code>.</div>
+          <div class="task-tags"><span class="tag tag-cli">cli</span><span class="tag tag-dx">dx</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="2-12">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Improve bar chart characters</div>
+          <div class="task-desc">Use half-block characters for smoother bars. Consider <code>▏▎▍▌▋▊▉█</code> for sub-character precision. Or use colored <code>━</code> style.</div>
+          <div class="task-tags"><span class="tag tag-cli">cli</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="2-13">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add terminal sparkline for weekly overview in <code>today</code></div>
+          <div class="task-desc">Show last 7 days as a sparkline: <code>▁▃▅▇█▅▃</code> at the top of today's report. Quick visual context.</div>
+          <div class="task-tags"><span class="tag tag-cli">cli</span></div>
+        </div>
+      </label>
+    </div>
+
+    <!-- CLI Polish -->
+    <div class="section">
+      <div class="section-title">Polish & UX</div>
+
+      <label class="task" data-id="2-14">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Detect NO_COLOR / TERM and disable colors gracefully</div>
+          <div class="task-desc">Respect <code>NO_COLOR</code> env var. Also skip colors when piping (<code>!atty::is(Stream::Stdout)</code>).</div>
+          <div class="task-tags"><span class="tag tag-cli">cli</span><span class="tag tag-dx">dx</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="2-15">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add <code>focusd export --format csv</code> option</div>
+          <div class="task-desc">In addition to JSON. Simple CSV with Date, App, Seconds columns. Easy to import into spreadsheets.</div>
+          <div class="task-tags"><span class="tag tag-cli">cli</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="2-16">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Show "active now" app in <code>today</code> report header</div>
+          <div class="task-desc">Query current focused window and display at top: <code>Active now: Firefox</code>. Reads from same backend as daemon.</div>
+          <div class="task-tags"><span class="tag tag-cli">cli</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="2-17">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Better daemon startup output</div>
+          <div class="task-desc">Show: backend detected, config loaded from, DB path, polling interval, idle detection status. Then go quiet. Add <code>--verbose</code> flag for debug logging.</div>
+          <div class="task-tags"><span class="tag tag-cli">cli</span><span class="tag tag-dx">dx</span></div>
+        </div>
+      </label>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!--                    PHASE 3: THEMING                       -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="phase" data-phase="3">
+  <div class="phase-header" onclick="togglePhase(this)">
+    <div class="phase-icon" style="background:#a78bfa20;color:#a78bfa;">🎨</div>
+    <div class="phase-title-wrap">
+      <div class="phase-number">Phase 3</div>
+      <div class="phase-title">Theming System — Matugen & Dynamic Colors</div>
+    </div>
+    <div class="phase-progress-mini">
+      <span class="phase-pct" data-pct>0%</span>
+      <div class="phase-bar-mini">
+        <div class="phase-bar-mini-fill" style="width:0%;background:#a78bfa;" data-bar></div>
+      </div>
+    </div>
+    <div class="phase-chevron">▶</div>
+  </div>
+  <div class="phase-body">
+
+    <div class="note">
+      <strong>The vision:</strong> One wallpaper change → your terminal reports, Tauri dashboard, 
+      and app feel all shift to match. Material You colors via <code>matugen</code>, with solid fallback 
+      defaults. Semantic tokens shared between CLI and GUI.
+    </div>
+
+    <!-- Theme Model -->
+    <div class="section">
+      <div class="section-title">Theme Model & Loading</div>
+
+      <label class="task" data-id="3-1">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Define <code>FocusdTheme</code> struct in core</div>
+          <div class="task-desc">Semantic tokens: <code>primary</code>, <code>secondary</code>, <code>background</code>, <code>surface</code>, <code>text</code>, <code>muted</code>, <code>accent</code>, <code>success</code>, <code>warning</code>, <code>error</code>. All as hex strings. Serializable.</div>
+          <div class="task-tags"><span class="tag tag-theme">theme</span><span class="tag tag-core">core</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="3-2">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Create built-in default dark theme</div>
+          <div class="task-desc">Hardcoded fallback theme that looks great. Used when no matugen or custom theme is configured. Matches your current dark aesthetic.</div>
+          <div class="task-tags"><span class="tag tag-theme">theme</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="3-3">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Write matugen color reader</div>
+          <div class="task-desc">Read from matugen's output file (usually <code>~/.cache/matugen/colors.json</code> or custom template path). Parse Material You color roles into <code>FocusdTheme</code>.</div>
+          <div class="task-tags"><span class="tag tag-theme">theme</span><span class="tag tag-core">core</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="3-4">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add theme resolution logic</div>
+          <div class="task-desc">Priority: 1) User override colors in config → 2) matugen if theme="matugen" → 3) built-in dark. Core function: <code>resolve_theme(config) → FocusdTheme</code>.</div>
+          <div class="task-tags"><span class="tag tag-theme">theme</span><span class="tag tag-core">core</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="3-5">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add matugen template for focusd (optional)</div>
+          <div class="task-desc">Create a matugen template that outputs focusd-compatible theme file. Users add it to their matugen config. Auto-regenerated on wallpaper change.</div>
+          <div class="task-tags"><span class="tag tag-theme">theme</span><span class="tag tag-dx">dx</span></div>
+        </div>
+      </label>
+    </div>
+
+    <!-- CLI Theming -->
+    <div class="section">
+      <div class="section-title">CLI Theming</div>
+
+      <label class="task" data-id="3-6">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Replace hardcoded <code>.cyan()</code> / <code>.green()</code> with theme colors</div>
+          <div class="task-desc">Use <code>colored::Color::TrueColor</code> with hex values from resolved theme. Bars use <code>theme.primary</code>, headers use <code>theme.accent</code>, etc.</div>
+          <div class="task-tags"><span class="tag tag-cli">cli</span><span class="tag tag-theme">theme</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="3-7">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add <code>--theme</code> CLI flag override</div>
+          <div class="task-desc"><code>focusd today --theme none</code> disables colors. <code>--theme dark</code> uses built-in. <code>--theme matugen</code> forces matugen. Overrides config.</div>
+          <div class="task-tags"><span class="tag tag-cli">cli</span><span class="tag tag-theme">theme</span></div>
+        </div>
+      </label>
+    </div>
+
+    <!-- GUI Theming -->
+    <div class="section">
+      <div class="section-title">GUI Theming</div>
+
+      <label class="task" data-id="3-8">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add <code>get_theme</code> Tauri command</div>
+          <div class="task-desc">Backend resolves theme and returns <code>FocusdTheme</code> as JSON to frontend. Frontend applies as CSS custom properties.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span><span class="tag tag-theme">theme</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="3-9">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Apply theme via CSS variables on <code>:root</code></div>
+          <div class="task-desc">On app mount, invoke <code>get_theme</code>, then set <code>document.documentElement.style.setProperty("--primary", theme.primary)</code> for each token.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span><span class="tag tag-theme">theme</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="3-10">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Ensure all shadcn components use CSS variables, not hardcoded colors</div>
+          <div class="task-desc">Audit <code>index.css</code>, <code>tailwind.config.js</code>, and all component files. Replace any raw hex with <code>hsl(var(--X))</code> or equivalent pattern.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span><span class="tag tag-theme">theme</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="3-11">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add theme hot-reload or refresh mechanism</div>
+          <div class="task-desc">Option A: Poll theme file for changes. Option B: Reload theme on window focus. Option C: Manual refresh button. Pick simplest first.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span><span class="tag tag-theme">theme</span></div>
+        </div>
+      </label>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!--                    PHASE 4: GUI REDESIGN                  -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="phase" data-phase="4">
+  <div class="phase-header" onclick="togglePhase(this)">
+    <div class="phase-icon" style="background:#f472b620;color:#f472b6;">✨</div>
+    <div class="phase-title-wrap">
+      <div class="phase-number">Phase 4</div>
+      <div class="phase-title">GUI Redesign — Dashboard That Slaps</div>
+    </div>
+    <div class="phase-progress-mini">
+      <span class="phase-pct" data-pct>0%</span>
+      <div class="phase-bar-mini">
+        <div class="phase-bar-mini-fill" style="width:0%;background:#f472b6;" data-bar></div>
+      </div>
+    </div>
+    <div class="phase-chevron">▶</div>
+  </div>
+  <div class="phase-body">
+
+    <div class="note">
+      <strong>Target feel:</strong> Like that screenshot you showed — centered panel, soft dark glass, 
+      minimal accent, heatmap calendar, smooth bars. Think desktop widget, not enterprise dashboard.
+      Rhythm, spacing, one accent, low noise.
+    </div>
+
+    <!-- Tauri Backend -->
+    <div class="section">
+      <div class="section-title">Tauri Backend — Richer API</div>
+
+      <label class="task" data-id="4-1">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Redesign <code>get_data</code> → <code>get_dashboard(view, anchor_date)</code></div>
+          <div class="task-desc">Return richer struct: <code>{ summary, comparison, top_apps, daily_chart, hourly_chart, heatmap, current_activity }</code>. One call, all data for a view.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span><span class="tag tag-core">core</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="4-2">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add <code>Summary</code> struct</div>
+          <div class="task-desc">Fields: <code>total_seconds</code>, <code>daily_average</code>, <code>comparison_seconds</code> (vs previous period), <code>comparison_label</code> ("vs yesterday"), <code>active_apps_count</code>.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="4-3">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add <code>get_current_activity()</code> Tauri command</div>
+          <div class="task-desc">Returns currently focused app name + window title (or null if idle). For live "Active Now" badge.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span><span class="tag tag-new">new feature</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="4-4">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add <code>get_settings()</code> and <code>save_settings()</code> Tauri commands</div>
+          <div class="task-desc">Read/write config.toml through the GUI. At minimum: aliases and theme preference. For the Settings panel.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span><span class="tag tag-config">config</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="4-5">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Reduce polling frequency intelligently</div>
+          <div class="task-desc">Today view: poll every 2–3s. Week/Month: poll every 15–30s. Or only refresh on view change + interval. Reduces CPU and prevents animation jitter.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span><span class="tag tag-perf">perf</span></div>
+        </div>
+      </label>
+    </div>
+
+    <!-- Layout -->
+    <div class="section">
+      <div class="section-title">Layout & Navigation</div>
+
+      <label class="task" data-id="4-6">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add 3 views: Today / Week / Month</div>
+          <div class="task-desc">Replace 2-tab layout with 3 views. Each view has its own optimal layout. Tab bar or segmented control at top.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="4-7">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add date navigation (← Today →)</div>
+          <div class="task-desc">Arrow buttons to go to previous/next day, week, or month. Display label like "Today", "Mar 16 – Mar 22", "March 2025". Pass <code>anchor_date</code> to backend.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span><span class="tag tag-new">new feature</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="4-8">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add Settings panel/modal</div>
+          <div class="task-desc">Accessible from header. Shows: theme selector, alias management, interval setting, about/version. Can be a slide-out panel or dialog.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span><span class="tag tag-new">new feature</span></div>
+        </div>
+      </label>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="section">
+      <div class="section-title">Summary Cards Row</div>
+
+      <label class="task" data-id="4-9">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Total Time card — big prominent number</div>
+          <div class="task-desc">Center position, largest visual weight. Shows <code>4h 20m</code> in large tabular-nums font. Like your screenshot.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="4-10">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Daily Average card</div>
+          <div class="task-desc">Shows average daily screen time for current period. "Daily average: 4h 13m, Mar 16–22". Smaller card.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="4-11">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Comparison card — vs previous period</div>
+          <div class="task-desc">Shows delta: "↑ 54m vs yesterday" with green/red indicator. Or "↓ 1h 12m vs last week".</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span></div>
+        </div>
+      </label>
+    </div>
+
+    <!-- Charts -->
+    <div class="section">
+      <div class="section-title">Charts & Visualizations</div>
+
+      <label class="task" data-id="4-12">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Weekly bar chart — Mon–Sun</div>
+          <div class="task-desc">Clean vertical bars for each day. Highlight today with accent. Muted for past days. Tooltip on hover showing exact time. Like your screenshot.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="4-13">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Monthly calendar heatmap</div>
+          <div class="task-desc">Grid of squares (like GitHub contributions). Color intensity = usage intensity. Uses <code>get_monthly_heatmap()</code>. Shows month name. Like your screenshot.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span><span class="tag tag-new">new feature</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="4-14">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Today hourly chart — 24h timeline</div>
+          <div class="task-desc">Horizontal or vertical bars for each hour 0–23. Shows activity distribution throughout the day. Uses <code>get_hourly_totals()</code>.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span><span class="tag tag-new">new feature</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="4-15">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Use theme accent color for all chart fills</div>
+          <div class="task-desc">Bars, heatmap intensity, active indicators all derive from <code>--primary</code> / <code>--accent</code> CSS vars. Consistent with matugen output.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span><span class="tag tag-theme">theme</span></div>
+        </div>
+      </label>
+    </div>
+
+    <!-- App List -->
+    <div class="section">
+      <div class="section-title">App List / Activity Log</div>
+
+      <label class="task" data-id="4-16">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Redesign app list with percentage bars</div>
+          <div class="task-desc">Each row: app icon (optional) + name + time + percentage + smooth animated bar. Sorted by usage. Like your screenshot but with percentages.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="4-17">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add category color dots (optional)</div>
+          <div class="task-desc">Small colored circle before app name indicating category (Development=blue, Browser=orange, etc.). Derived from config categories.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span><span class="tag tag-new">new feature</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="4-18">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Limit list to top 10 with "Show All" toggle</div>
+          <div class="task-desc">Default show top 10 apps. Expandable to show all. Prevents scroll fatigue for heavy users.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span></div>
+        </div>
+      </label>
+    </div>
+
+    <!-- Live & Polish -->
+    <div class="section">
+      <div class="section-title">Live Features & Polish</div>
+
+      <label class="task" data-id="4-19">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add "Active Now" indicator in header</div>
+          <div class="task-desc">Pulsing dot + current app name. Uses <code>get_current_activity()</code>. Shows "Idle" when no window focused.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="4-20">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add proper loading and error states</div>
+          <div class="task-desc">Skeleton loaders on initial load. Error card if DB unreachable. Not just "Connecting...".</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="4-21">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Smooth number transitions (count-up animation)</div>
+          <div class="task-desc">When total time updates, animate the number change smoothly. Use <code>framer-motion</code> or a counting hook. Prevents jarring jumps.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="4-22">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Make window semi-transparent / glassmorphism (optional)</div>
+          <div class="task-desc">If compositor supports it, slight window transparency for the widget feel. Tauri supports this on some platforms. Test on Hyprland.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span><span class="tag tag-theme">theme</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="4-23">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Responsive layout — handle window resize gracefully</div>
+          <div class="task-desc">Cards should reflow on small windows. Mobile-like single column under ~600px. Charts should resize with container.</div>
+          <div class="task-tags"><span class="tag tag-gui">gui</span></div>
+        </div>
+      </label>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!--                    PHASE 5: BACKEND EFFICIENCY            -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="phase" data-phase="5">
+  <div class="phase-header" onclick="togglePhase(this)">
+    <div class="phase-icon" style="background:#34d39920;color:#34d399;">⚡</div>
+    <div class="phase-title-wrap">
+      <div class="phase-number">Phase 5</div>
+      <div class="phase-title">Backend Efficiency & Hardening</div>
+    </div>
+    <div class="phase-progress-mini">
+      <span class="phase-pct" data-pct>0%</span>
+      <div class="phase-bar-mini">
+        <div class="phase-bar-mini-fill" style="width:0%;background:#34d399;" data-bar></div>
+      </div>
+    </div>
+    <div class="phase-chevron">▶</div>
+  </div>
+  <div class="phase-body">
+
+    <div class="note">
+      <strong>Last mile.</strong> Not urgent, but makes focusd feel truly solid.
+      Efficiency improvements, better idle handling, and robustness.
+      Do this after the user-facing stuff is polished.
+    </div>
+
+    <!-- Window Detection -->
+    <div class="section">
+      <div class="section-title">Window Detection Improvements</div>
+
+      <label class="task" data-id="5-1">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Hyprland: switch from polling to socket events</div>
+          <div class="task-desc">Subscribe to <code>$XDG_RUNTIME_DIR/hypr/$SIGNATURE/.socket2.sock</code> for <code>activewindow</code> events instead of spawning <code>hyprctl</code> every second. Much more efficient.</div>
+          <div class="task-tags"><span class="tag tag-perf">perf</span><span class="tag tag-core">core</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="5-2">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">X11: improve WM_CLASS normalization</div>
+          <div class="task-desc">Handle edge cases: multiple null-byte segments, mixed case, trailing whitespace. Maybe lowercase-normalize all app_ids. Add unit tests for known quirky apps.</div>
+          <div class="task-tags"><span class="tag tag-core">core</span><span class="tag tag-bug">bug</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="5-3">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add Wayland/wlroots support via <code>wlr-foreign-toplevel</code></div>
+          <div class="task-desc">For Sway, River, and other wlroots-based compositors. Use <code>wayland-client</code> crate to subscribe to toplevel events. This widens the user base significantly.</div>
+          <div class="task-tags"><span class="tag tag-new">new feature</span><span class="tag tag-core">core</span></div>
+        </div>
+      </label>
+    </div>
+
+    <!-- Idle Detection -->
+    <div class="section">
+      <div class="section-title">Idle Detection</div>
+
+      <label class="task" data-id="5-4">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Implement configurable idle timeout</div>
+          <div class="task-desc">Wire up <code>idle_timeout</code> config field. Query idle time from <code>ext-idle-notify</code> (Wayland) or <code>XScreenSaver</code> extension (X11) and compare against threshold.</div>
+          <div class="task-tags"><span class="tag tag-core">core</span><span class="tag tag-config">config</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="5-5">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add <code>hypridle</code> integration as alternative idle source</div>
+          <div class="task-desc">For Hyprland users already using <code>hypridle</code>. Check idle status through hyprland socket or D-Bus. More reliable than loginctl on some setups.</div>
+          <div class="task-tags"><span class="tag tag-core">core</span></div>
+        </div>
+      </label>
+    </div>
+
+    <!-- Robustness -->
+    <div class="section">
+      <div class="section-title">Robustness & Quality</div>
+
+      <label class="task" data-id="5-6">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add logging with <code>tracing</code> or <code>log</code> crate</div>
+          <div class="task-desc">Replace <code>eprintln!</code> with proper logging. Default: warn+error to stderr. <code>--verbose</code>: info+debug. Structured log output for debugging.</div>
+          <div class="task-tags"><span class="tag tag-dx">dx</span><span class="tag tag-core">core</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="5-7">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Handle DB locking gracefully</div>
+          <div class="task-desc">If daemon and GUI both access DB simultaneously, SQLite WAL handles most cases. Add retry logic with backoff for <code>SQLITE_BUSY</code>. Test concurrent access.</div>
+          <div class="task-tags"><span class="tag tag-db">db</span><span class="tag tag-perf">perf</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="5-8">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add DB backup / export-import cycle</div>
+          <div class="task-desc"><code>focusd export --full-backup</code> dumps entire DB as JSON. <code>focusd import backup.json</code> restores it. Safety net for users.</div>
+          <div class="task-tags"><span class="tag tag-cli">cli</span><span class="tag tag-db">db</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="5-9">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add unit tests for core crate</div>
+          <div class="task-desc">Test: migration logic, query correctness, alias merging, config parsing edge cases, theme resolution. Use in-memory SQLite for test isolation.</div>
+          <div class="task-tags"><span class="tag tag-dx">dx</span><span class="tag tag-core">core</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="5-10">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Add CI pipeline (GitHub Actions)</div>
+          <div class="task-desc">Cargo build + test + clippy + fmt check. Maybe build Tauri app artifact. Runs on push to main and PRs.</div>
+          <div class="task-tags"><span class="tag tag-dx">dx</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="5-11">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Improve installer / packaging</div>
+          <div class="task-desc">AUR package, Nix flake, or at least a proper <code>Makefile</code>. Systemd user service file for the daemon. Desktop file already exists — verify it works.</div>
+          <div class="task-tags"><span class="tag tag-dx">dx</span></div>
+        </div>
+      </label>
+
+      <label class="task" data-id="5-12">
+        <input type="checkbox"><div class="task-content">
+          <div class="task-label">Update README for v2</div>
+          <div class="task-desc">New screenshots, updated feature list, theming docs, full command reference, config example, architecture overview. Make it feel like a real project.</div>
+          <div class="task-tags"><span class="tag tag-dx">dx</span></div>
+        </div>
+      </label>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════ FOOTER ═══════ -->
+<div class="footer">
+  <p>focusd v2 upgrade plan · checkboxes saved in localStorage</p>
+  <p style="margin-top:0.3rem"><a href="https://github.com/revanthlol/focusd">github.com/revanthlol/focusd</a></p>
+</div>
+
+</div>
+
+<!-- ═══════ SCRIPT ═══════ -->
+<script>
+const STORAGE_KEY = 'focusd-v2-plan';
+
+function loadState() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  } catch { return {}; }
+}
+
+function saveState(state) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function initCheckboxes() {
+  const state = loadState();
+  document.querySelectorAll('.task').forEach(task => {
+    const id = task.dataset.id;
+    const cb = task.querySelector('input[type="checkbox"]');
+    if (!id || !cb) return;
+    
+    cb.checked = !!state[id];
+    if (cb.checked) task.classList.add('done');
+    
+    cb.addEventListener('change', () => {
+      const s = loadState();
+      s[id] = cb.checked;
+      saveState(s);
+      task.classList.toggle('done', cb.checked);
+      updateProgress();
+    });
+  });
+}
+
+function updateProgress() {
+  const phases = document.querySelectorAll('.phase[data-phase]');
+  let globalDone = 0, globalTotal = 0, phasesDone = 0;
+
+  phases.forEach(phase => {
+    const tasks = phase.querySelectorAll('.task input[type="checkbox"]');
+    const done = phase.querySelectorAll('.task input[type="checkbox"]:checked');
+    const total = tasks.length;
+    const doneCount = done.length;
+    const pct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+
+    phase.querySelector('[data-pct]').textContent = pct + '%';
+    phase.querySelector('[data-bar]').style.width = pct + '%';
+    
+    if (pct === 100 && total > 0) {
+      phase.classList.add('phase-complete');
+      phasesDone++;
+    } else {
+      phase.classList.remove('phase-complete');
+    }
+
+    globalDone += doneCount;
+    globalTotal += total;
+  });
+
+  const globalPct = globalTotal > 0 ? Math.round((globalDone / globalTotal) * 100) : 0;
+  document.getElementById('globalPct').textContent = globalPct + '%';
+  document.getElementById('globalBar').style.width = globalPct + '%';
+  document.getElementById('globalDone').textContent = globalDone;
+  document.getElementById('globalTotal').textContent = globalTotal;
+  document.getElementById('globalPhasesDone').textContent = phasesDone;
+}
+
+function togglePhase(header) {
+  header.parentElement.classList.toggle('open');
+}
+
+function resetAll() {
+  if (!confirm('Reset all progress? This cannot be undone.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  document.querySelectorAll('.task input[type="checkbox"]').forEach(cb => {
+    cb.checked = false;
+    cb.closest('.task').classList.remove('done');
+  });
+  updateProgress();
+}
+
+// Init
+initCheckboxes();
+updateProgress();
+</script>
+</body>
+</html>
